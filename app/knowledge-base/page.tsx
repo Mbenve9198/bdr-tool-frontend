@@ -90,14 +90,14 @@ export default function KnowledgeBasePage() {
   const [stats, setStats] = useState<Stats | null>(null)
   const [loading, setLoading] = useState(false)
   const [activeTab, setActiveTab] = useState("overview")
-  const [selectedCategory, setSelectedCategory] = useState<string>("")
+  const [selectedCategory, setSelectedCategory] = useState<string>("all")
   const [searchTerm, setSearchTerm] = useState("")
   const [showForm, setShowForm] = useState(false)
   const [editingItem, setEditingItem] = useState<KnowledgeItem | null>(null)
   
   const [formData, setFormData] = useState({
     title: "",
-    category: "",
+    category: "funzionalità",
     content: "",
     tags: "",
     priority: 1,
@@ -133,7 +133,7 @@ export default function KnowledgeBasePage() {
       let url = '/api/knowledge-base'
       const params = new URLSearchParams()
       
-      if (selectedCategory) params.append('category', selectedCategory)
+      if (selectedCategory && selectedCategory !== 'all') params.append('category', selectedCategory)
       if (searchTerm) params.append('search', searchTerm)
       
       if (params.toString()) url += `?${params.toString()}`
@@ -223,7 +223,7 @@ export default function KnowledgeBasePage() {
   const resetForm = () => {
     setFormData({
       title: "",
-      category: "",
+      category: "funzionalità",
       content: "",
       tags: "",
       priority: 1,
@@ -395,7 +395,7 @@ export default function KnowledgeBasePage() {
                       <SelectValue placeholder="Tutte le categorie" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Tutte le categorie</SelectItem>
+                      <SelectItem value="all">Tutte le categorie</SelectItem>
                       {categories.map((cat) => (
                         <SelectItem key={cat} value={cat}>
                           {categoryEmojis[cat]} {cat}
@@ -403,7 +403,7 @@ export default function KnowledgeBasePage() {
                       ))}
                     </SelectContent>
                   </Select>
-                  <Button variant="outline" onClick={() => {setSearchTerm(""); setSelectedCategory("")}}>
+                  <Button variant="outline" onClick={() => {setSearchTerm(""); setSelectedCategory("all")}}>
                     🔄 Reset
                   </Button>
                 </div>
