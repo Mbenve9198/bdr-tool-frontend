@@ -5,9 +5,11 @@ import { useChat } from "@ai-sdk/react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { Card, CardContent } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
+import { Progress } from "@/components/ui/progress"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 
 type ChatMode = "cold-call" | "offer-generation" | null
 
@@ -25,6 +27,33 @@ interface OfferForm {
   weightRanges: string
 }
 
+interface SimilarWebData {
+  url: string
+  siteName: string
+  title: string
+  description: string
+  category: string
+  globalRank: number
+  totalVisits: number
+  timeOnSite: number
+  pagePerVisit: number
+  bounceRate: number
+  trafficSources: {
+    direct: number
+    search: number
+    social: number
+    referrals: number
+    paidReferrals: number
+    mail: number
+  }
+  topCountries: Array<{
+    countryCode: string
+    countryName: string
+    visitsShare: number
+    estimatedVisits: number
+  }>
+}
+
 export default function SendCloudBDRChat() {
   const [chatMode, setChatMode] = useState<ChatMode>(null)
   const [coldCallForm, setColdCallForm] = useState<ColdCallForm>({ websiteUrl: "" })
@@ -39,12 +68,15 @@ export default function SendCloudBDRChat() {
   })
   const [showColdCallForm, setShowColdCallForm] = useState(false)
   const [showOfferForm, setShowOfferForm] = useState(false)
+  const [similarWebData, setSimilarWebData] = useState<SimilarWebData | null>(null)
+  const [analyzingWebsite, setAnalyzingWebsite] = useState(false)
+  const [analysisError, setAnalysisError] = useState<string | null>(null)
 
   const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({
     api: "/api/chat",
     body: {
       mode: chatMode,
-      formData: chatMode === "cold-call" ? coldCallForm : offerForm,
+      formData: chatMode === "cold-call" ? { ...coldCallForm, similarWebData } : offerForm,
     },
   })
 
@@ -57,16 +89,54 @@ export default function SendCloudBDRChat() {
     }
   }
 
+  const analyzeSimilarWebData = async (url: string) => {
+    if (!url) return
+
+    setAnalyzingWebsite(true)
+    setAnalysisError(null)
+
+    try {
+      const response = await fetch('/api/similarweb', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ websiteUrl: url })
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        setSimilarWebData(data.data)
+      } else {
+        setAnalysisError(data.error || 'Errore nell\'analisi del traffico')
+      }
+    } catch (error) {
+      console.error('Errore analisi SimilarWeb:', error)
+      setAnalysisError('Errore di connessione durante l\'analisi del traffico')
+    } finally {
+      setAnalyzingWebsite(false)
+    }
+  }
+
   const handleColdCallSubmit = async () => {
     if (!coldCallForm.websiteUrl) return
 
+    // Prima analizza i dati SimilarWeb
+    await analyzeSimilarWebData(coldCallForm.websiteUrl)
+
     setShowColdCallForm(false)
-    // Simulate sending to Perplexity and starting conversation
+    
+    let prompt = `Analizza il sito ${coldCallForm.websiteUrl} e genera un hook per chiamata a freddo`
+    
+    // Se abbiamo dati SimilarWeb, includiamoli nel prompt
+    if (similarWebData) {
+      prompt += `\n\nDati traffico dal sito:\n- Visite mensili: ${similarWebData.totalVisits?.toLocaleString() || 'N/A'}\n- Categoria: ${similarWebData.category || 'N/A'}\n- Ranking globale: ${similarWebData.globalRank?.toLocaleString() || 'N/A'}\n- Paesi principali: ${similarWebData.topCountries?.slice(0, 3).map(c => `${c.countryName} (${c.visitsShare}%)`).join(', ') || 'N/A'}`
+    }
+
     const syntheticEvent = {
       preventDefault: () => {},
       target: {
         elements: {
-          prompt: { value: `Analizza il sito ${coldCallForm.websiteUrl} e genera un hook per chiamata a freddo` },
+          prompt: { value: prompt },
         },
       },
     } as any
@@ -117,6 +187,100 @@ export default function SendCloudBDRChat() {
       currentPrices: "",
       weightRanges: "",
     })
+    setSimilarWebData(null)
+    setAnalysisError(null)
+  }
+
+  const renderSimilarWebAnalysis = () => {
+    if (!similarWebData) return null
+
+    return (
+      <Card className="mt-4">
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            📊 Analisi Traffico Sito Web
+            <Badge variant="secondary">{similarWebData.category}</Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+            <div>
+              <div className="font-medium text-gray-500">Visite Mensili</div>
+              <div className="text-xl font-bold text-blue-600">
+                {similarWebData.totalVisits?.toLocaleString() || 'N/A'}
+              </div>
+            </div>
+            <div>
+              <div className="font-medium text-gray-500">Ranking Globale</div>
+              <div className="text-xl font-bold text-green-600">
+                #{similarWebData.globalRank?.toLocaleString() || 'N/A'}
+              </div>
+            </div>
+            <div>
+              <div className="font-medium text-gray-500">Tempo sul Sito</div>
+              <div className="text-xl font-bold text-purple-600">
+                {similarWebData.timeOnSite || 'N/A'}min
+              </div>
+            </div>
+            <div>
+              <div className="font-medium text-gray-500">Bounce Rate</div>
+              <div className="text-xl font-bold text-orange-600">
+                {similarWebData.bounceRate || 'N/A'}%
+              </div>
+            </div>
+          </div>
+
+          <Separator />
+
+          <div>
+            <h4 className="font-medium mb-3">🌍 Distribuzione Geografica del Traffico</h4>
+            <div className="space-y-2">
+              {similarWebData.topCountries?.slice(0, 5).map((country, index) => (
+                <div key={country.countryCode} className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-mono">{country.countryCode}</span>
+                    <span className="text-sm">{country.countryName}</span>
+                  </div>
+                  <div className="flex items-center gap-2 flex-1 max-w-40">
+                    <Progress value={country.visitsShare} className="h-2" />
+                    <span className="text-sm font-medium min-w-fit">
+                      {country.visitsShare}%
+                    </span>
+                  </div>
+                  <div className="text-xs text-gray-500 min-w-fit">
+                    {country.estimatedVisits?.toLocaleString()} visite
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <Separator />
+
+          <div>
+            <h4 className="font-medium mb-3">📈 Fonti di Traffico</h4>
+            <div className="grid grid-cols-2 gap-2 text-sm">
+              <div className="flex justify-between">
+                <span>🔍 Ricerca:</span>
+                <span className="font-medium">{similarWebData.trafficSources?.search || 0}%</span>
+              </div>
+              <div className="flex justify-between">
+                <span>🌐 Diretto:</span>
+                <span className="font-medium">{similarWebData.trafficSources?.direct || 0}%</span>
+              </div>
+              <div className="flex justify-between">
+                <span>👥 Social:</span>
+                <span className="font-medium">{similarWebData.trafficSources?.social || 0}%</span>
+              </div>
+              <div className="flex justify-between">
+                <span>🔗 Referral:</span>
+                <span className="font-medium">{similarWebData.trafficSources?.referrals || 0}%</span>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    )
   }
 
   return (
@@ -244,7 +408,7 @@ export default function SendCloudBDRChat() {
                     <div className="text-center">
                       <h2 className="text-xl font-semibold mb-2">📞 Modalità Chiamata a Freddo</h2>
                       <p className="text-gray-600 text-sm">
-                        Inserisci l'URL del sito web del prospect per generare un hook personalizzato
+                        Inserisci l'URL del sito web del prospect per generare un hook personalizzato con analisi del traffico
                       </p>
                     </div>
 
@@ -256,12 +420,34 @@ export default function SendCloudBDRChat() {
                         value={coldCallForm.websiteUrl}
                         onChange={(e) => setColdCallForm({ websiteUrl: e.target.value })}
                         className="w-full"
+                        disabled={analyzingWebsite}
                       />
                     </div>
 
+                    {analyzingWebsite && (
+                      <Alert>
+                        <AlertDescription className="flex items-center gap-2">
+                          <div className="animate-spin">🔄</div>
+                          Analizzando il traffico del sito web...
+                        </AlertDescription>
+                      </Alert>
+                    )}
+
+                    {analysisError && (
+                      <Alert variant="destructive">
+                        <AlertDescription>
+                          ⚠️ {analysisError}
+                        </AlertDescription>
+                      </Alert>
+                    )}
+
                     <div className="flex gap-2">
-                      <Button onClick={handleColdCallSubmit} disabled={!coldCallForm.websiteUrl} className="flex-1">
-                        🚀 Genera Hook
+                      <Button 
+                        onClick={handleColdCallSubmit} 
+                        disabled={!coldCallForm.websiteUrl || analyzingWebsite} 
+                        className="flex-1"
+                      >
+                        🚀 Genera Hook {analyzingWebsite ? '...' : ''}
                       </Button>
                       <Button variant="outline" onClick={() => setShowColdCallForm(false)}>
                         Annulla
@@ -385,6 +571,9 @@ export default function SendCloudBDRChat() {
                     🔄 Reset
                   </Button>
                 </div>
+
+                {/* Mostra analisi SimilarWeb se disponibile */}
+                {renderSimilarWebAnalysis()}
 
                 <div className="space-y-4">
                   {messages.map((message) => (

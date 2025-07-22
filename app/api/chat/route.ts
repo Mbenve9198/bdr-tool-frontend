@@ -50,17 +50,49 @@ export async function POST(req: Request) {
     - Fornisci consigli su come gestire obiezioni comuni (usa le risposte dalla knowledge base)
     - Suggerisci tariffe corrieri competitive basate sui dati reali
     - Aiuta a costruire rapport con il prospect
-    - Crea script di chiamata strutturati e personalizzati`
+    - Crea script di chiamata strutturati e personalizzati
+    - Usa i dati di traffico SimilarWeb quando disponibili per personalizzare l'approccio`
+
+    // Aggiungi dati SimilarWeb se disponibili
+    if (formData?.similarWebData) {
+      const data = formData.similarWebData
+      systemPrompt += `\n\nDADI TRAFFICO SITO WEB (SimilarWeb):
+      - URL: ${data.url}
+      - Nome sito: ${data.siteName}
+      - Categoria: ${data.category}
+      - Visite mensili: ${data.totalVisits?.toLocaleString() || 'N/A'}
+      - Ranking globale: ${data.globalRank?.toLocaleString() || 'N/A'}
+      - Tempo sul sito: ${data.timeOnSite || 'N/A'} minuti
+      - Pagine per visita: ${data.pagePerVisit || 'N/A'}
+      - Bounce rate: ${data.bounceRate || 'N/A'}%
+      
+      DISTRIBUZIONE GEOGRAFICA:
+      ${data.topCountries?.slice(0, 5).map((country: any) => 
+        `- ${country.countryName}: ${country.visitsShare}% (${country.estimatedVisits?.toLocaleString()} visite)`
+      ).join('\n') || 'N/A'}
+      
+      FONTI DI TRAFFICO:
+      - Ricerca: ${data.trafficSources?.search || 0}%
+      - Diretto: ${data.trafficSources?.direct || 0}%
+      - Social: ${data.trafficSources?.social || 0}%
+      - Referral: ${data.trafficSources?.referrals || 0}%
+      
+      ISTRUZIONI SPECIFICHE:
+      - Usa questi dati per creare un hook più convincente e personalizzato
+      - Menziona aspetti rilevanti del traffico per dimostrare preparazione
+      - Identifica opportunità di crescita basate sui dati geografici
+      - Suggerisci soluzioni SendCloud specifiche basate sul volume di traffico`
+    }
 
     // Se c'è un URL sito web, analizzalo
-    if (formData?.website) {
+    if (formData?.websiteUrl && !formData?.similarWebData) {
       try {
         const analysisResponse = await fetch(`${BACKEND_URL}/prospects`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             companyName: formData.companyName || 'Prospect',
-            website: formData.website,
+            website: formData.websiteUrl,
             industry: formData.industry || 'E-commerce'
           })
         })
@@ -69,7 +101,7 @@ export async function POST(req: Request) {
           const prospectData = await analysisResponse.json()
           systemPrompt += `\n\nAnalisi del prospect:
           - Azienda: ${formData.companyName || 'N/A'}
-          - Sito web: ${formData.website}
+          - Sito web: ${formData.websiteUrl}
           - Settore: ${formData.industry || 'N/A'}
           - Score: ${prospectData.data?.score || 'N/A'}`
         }
