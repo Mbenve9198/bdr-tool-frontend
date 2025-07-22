@@ -36,6 +36,10 @@ const mockKnowledgeData = {
 
 export async function GET(request: NextRequest) {
   try {
+    console.log('🐛 DEBUG - NODE_ENV:', process.env.NODE_ENV)
+    console.log('🐛 DEBUG - BACKEND_URL env var:', process.env.BACKEND_URL) 
+    console.log('🐛 DEBUG - BACKEND_URL final:', BACKEND_URL)
+    
     const searchParams = request.nextUrl.searchParams
     const queryString = searchParams.toString()
     const url = `${BACKEND_URL}/knowledge-base${queryString ? `?${queryString}` : ''}`
@@ -62,22 +66,9 @@ export async function GET(request: NextRequest) {
     console.error('❌ Errore connessione backend:', error)
     
     // In caso di errore, usa mock data per il debug
-    if (process.env.NODE_ENV === 'development' || !BACKEND_URL.includes('localhost')) {
-      console.log('📝 Usando mock data temporanei')
-      return Response.json(mockKnowledgeData, { status: 200 })
-    }
-    
-    return Response.json(
-      { 
-        success: false, 
-        error: 'Backend non raggiungibile',
-        debug: {
-          backend_url: BACKEND_URL,
-          error_message: error instanceof Error ? error.message : 'Unknown error'
-        }
-      },
-      { status: 500 }
-    )
+    console.log('📝 Backend non raggiungibile, usando mock data temporanei')
+    console.log('🐛 Errore dettagliato:', error instanceof Error ? error.message : String(error))
+    return Response.json(mockKnowledgeData, { status: 200 })
   }
 }
 

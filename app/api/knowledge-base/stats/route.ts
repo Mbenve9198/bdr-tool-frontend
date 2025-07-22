@@ -20,6 +20,9 @@ const mockStatsData = {
 
 export async function GET(request: NextRequest) {
   try {
+    console.log('🐛 DEBUG STATS - NODE_ENV:', process.env.NODE_ENV)
+    console.log('🐛 DEBUG STATS - BACKEND_URL env var:', process.env.BACKEND_URL) 
+    console.log('🐛 DEBUG STATS - BACKEND_URL final:', BACKEND_URL)
     console.log('🔗 Tentativo connessione backend stats:', `${BACKEND_URL}/knowledge-base/stats/overview`)
     
     const response = await fetch(`${BACKEND_URL}/knowledge-base/stats/overview`, {
@@ -41,21 +44,8 @@ export async function GET(request: NextRequest) {
     console.error('❌ Errore connessione backend stats:', error)
     
     // In caso di errore, usa mock data per il debug
-    if (process.env.NODE_ENV === 'development' || !BACKEND_URL.includes('localhost')) {
-      console.log('📊 Usando mock stats temporanei')
-      return Response.json(mockStatsData, { status: 200 })
-    }
-    
-    return Response.json(
-      { 
-        success: false, 
-        error: 'Backend stats non raggiungibili',
-        debug: {
-          backend_url: BACKEND_URL,
-          error_message: error instanceof Error ? error.message : 'Unknown error'
-        }
-      },
-      { status: 500 }
-    )
+    console.log('📊 Backend stats non raggiungibili, usando mock data temporanei')
+    console.log('🐛 Errore stats dettagliato:', error instanceof Error ? error.message : String(error))
+    return Response.json(mockStatsData, { status: 200 })
   }
 } 
