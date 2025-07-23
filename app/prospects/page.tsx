@@ -42,8 +42,6 @@ interface ProspectDetails {
   similarwebData: any
 }
 
-const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:5000/api'
-
 export default function ProspectsPage() {
   const [prospects, setProspects] = useState<ProspectSummary[]>([])
   const [selectedProspect, setSelectedProspect] = useState<ProspectDetails | null>(null)
@@ -57,15 +55,21 @@ export default function ProspectsPage() {
 
   const loadProspects = async () => {
     try {
-      const response = await fetch(`${BACKEND_URL}/similarweb/prospects`)
+      console.log('🔄 Caricamento prospect...')
+      const response = await fetch('/api/prospects')
       if (response.ok) {
         const data = await response.json()
+        console.log('📋 Risposta API prospect:', data)
         if (data.success) {
           setProspects(data.data)
+        } else {
+          console.error('❌ Errore API:', data.error)
         }
+      } else {
+        console.error('❌ Errore HTTP:', response.status, response.statusText)
       }
     } catch (error) {
-      console.error('Errore caricamento prospect:', error)
+      console.error('❌ Errore caricamento prospect:', error)
     } finally {
       setLoading(false)
     }
@@ -73,15 +77,21 @@ export default function ProspectsPage() {
 
   const loadProspectDetails = async (id: string) => {
     try {
-      const response = await fetch(`${BACKEND_URL}/similarweb/prospects/${id}`)
+      console.log(`🔍 Caricamento dettagli prospect: ${id}`)
+      const response = await fetch(`/api/prospects/${id}`)
       if (response.ok) {
         const data = await response.json()
+        console.log('📄 Risposta API dettagli:', data)
         if (data.success) {
           setSelectedProspect(data.data)
+        } else {
+          console.error('❌ Errore API dettagli:', data.error)
         }
+      } else {
+        console.error('❌ Errore HTTP dettagli:', response.status, response.statusText)
       }
     } catch (error) {
-      console.error('Errore caricamento dettagli:', error)
+      console.error('❌ Errore caricamento dettagli:', error)
     }
   }
 
