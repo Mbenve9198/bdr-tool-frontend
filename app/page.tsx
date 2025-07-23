@@ -132,7 +132,14 @@ export default function SendCloudBDRChat() {
       if (data.success) {
         setSimilarWebData(data.data)
       } else {
-        setAnalysisError(data.error || 'Errore nell\'analisi del traffico')
+        let errorMsg = data.error || 'Errore nell\'analisi del traffico'
+        
+        // Messaggio più specifico per errori 400
+        if (response.status === 400) {
+          errorMsg = `${errorMsg}\n\n💡 Suggerimento: SimilarWeb funziona meglio con siti web di medie-grandi dimensioni. Prova con domini popolari per testare la funzionalità.`
+        }
+        
+        setAnalysisError(errorMsg)
       }
     } catch (error) {
       console.error('Errore analisi SimilarWeb:', error)
