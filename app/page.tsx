@@ -734,6 +734,9 @@ export default function SendCloudBDRChat() {
               </Card>
             )}
 
+            {/* Mostra analisi SimilarWeb se disponibile (fuori dalla condizione messages) */}
+            {!showColdCallForm && !showOfferForm && chatMode === "cold-call" && renderSimilarWebAnalysis()}
+
             {/* Chat Messages */}
             {messages.length > 0 && !showColdCallForm && !showOfferForm && (
               <div className="space-y-4 max-w-4xl mx-auto">
@@ -745,9 +748,6 @@ export default function SendCloudBDRChat() {
                     🔄 Reset
                   </Button>
                 </div>
-
-                {/* Mostra analisi SimilarWeb se disponibile */}
-                {renderSimilarWebAnalysis()}
 
                 <div className="space-y-4">
                   {messages.map((message) => (
