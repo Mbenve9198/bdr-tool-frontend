@@ -15,6 +15,15 @@ export async function POST(req: Request) {
 
     console.log(`Analizzando traffico per: ${domain}`)
 
+    // Verifica che il token Apify sia configurato
+    if (!process.env.APIFY_TOKEN) {
+      console.error('APIFY_TOKEN non configurato')
+      return Response.json({ 
+        success: false, 
+        error: 'Configurazione mancante: APIFY_TOKEN non impostato' 
+      }, { status: 500 })
+    }
+
     const response = await fetch('https://api.apify.com/v2/acts/tri_angle~fast-similarweb-scraper/run-sync-get-dataset-items', {
       method: 'POST',
       headers: {
