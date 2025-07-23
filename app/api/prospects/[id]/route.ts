@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:5000'
+const BACKEND_URL = process.env.BACKEND_URL || 'https://sendcloud-bdr-backend.onrender.com'
 
 export async function GET(
   request: NextRequest,
@@ -9,6 +9,8 @@ export async function GET(
   try {
     const { id } = params
     console.log(`📄 Chiamata GET /api/prospects/${id} - recupero dettagli prospect`)
+    console.log('🔗 BACKEND_URL:', BACKEND_URL)
+    console.log('🌐 Full URL:', `${BACKEND_URL}/api/similarweb/prospects/${id}`)
     
     const response = await fetch(`${BACKEND_URL}/api/similarweb/prospects/${id}`, {
       method: 'GET',
