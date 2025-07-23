@@ -28,17 +28,27 @@ interface OfferForm {
 }
 
 interface SimilarWebData {
-  url: string
-  siteName: string
-  title: string
-  description: string
-  category: string
-  globalRank: number
-  totalVisits: number
-  timeOnSite: number
-  pagePerVisit: number
-  bounceRate: number
-  trafficSources: {
+  basic: {
+    url: string
+    siteName: string
+    title: string
+    description: string
+    category: string
+    scrapedAt: string
+  }
+  ranking: {
+    globalRank: number
+    countryRank: any
+    categoryRank: any
+  }
+  traffic: {
+    totalVisits: number
+    timeOnSite: number
+    pagePerVisit: number
+    bounceRate: number
+    estimatedMonthlyVisits: any
+  }
+  sources: {
     direct: number
     search: number
     social: number
@@ -46,11 +56,26 @@ interface SimilarWebData {
     paidReferrals: number
     mail: number
   }
-  topCountries: Array<{
-    countryCode: string
-    countryName: string
-    visitsShare: number
-    estimatedVisits: number
+  geography: {
+    topCountries: Array<{
+      countryCode: string
+      countryName: string
+      visitsShare: number
+      estimatedVisits: number
+    }>
+  }
+  keywords: {
+    topKeywords: Array<{
+      name: string
+      estimatedValue: number
+      volume: number
+    }>
+  }
+  bdrInsights: Array<{
+    type: string
+    message: string
+    priority: string
+    actionable: string
   }>
 }
 
@@ -129,7 +154,7 @@ export default function SendCloudBDRChat() {
     
     // Se abbiamo dati SimilarWeb, includiamoli nel prompt
     if (similarWebData) {
-      prompt += `\n\nDati traffico dal sito:\n- Visite mensili: ${similarWebData.totalVisits?.toLocaleString() || 'N/A'}\n- Categoria: ${similarWebData.category || 'N/A'}\n- Ranking globale: ${similarWebData.globalRank?.toLocaleString() || 'N/A'}\n- Paesi principali: ${similarWebData.topCountries?.slice(0, 3).map(c => `${c.countryName} (${c.visitsShare}%)`).join(', ') || 'N/A'}`
+      prompt += `\n\nDati traffico dal sito:\n- Visite mensili: ${similarWebData.traffic.totalVisits?.toLocaleString() || 'N/A'}\n- Categoria: ${similarWebData.basic.category || 'N/A'}\n- Ranking globale: ${similarWebData.ranking.globalRank?.toLocaleString() || 'N/A'}\n- Paesi principali: ${similarWebData.geography.topCountries?.slice(0, 3).map((c: any) => `${c.countryName} (${c.visitsShare}%)`).join(', ') || 'N/A'}`
     }
 
     const syntheticEvent = {
@@ -199,7 +224,7 @@ export default function SendCloudBDRChat() {
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
             📊 Analisi Traffico Sito Web
-            <Badge variant="secondary">{similarWebData.category}</Badge>
+            <Badge variant="secondary">{similarWebData.basic.category}</Badge>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -207,25 +232,25 @@ export default function SendCloudBDRChat() {
             <div>
               <div className="font-medium text-gray-500">Visite Mensili</div>
               <div className="text-xl font-bold text-blue-600">
-                {similarWebData.totalVisits?.toLocaleString() || 'N/A'}
+                {similarWebData.traffic.totalVisits?.toLocaleString() || 'N/A'}
               </div>
             </div>
             <div>
               <div className="font-medium text-gray-500">Ranking Globale</div>
               <div className="text-xl font-bold text-green-600">
-                #{similarWebData.globalRank?.toLocaleString() || 'N/A'}
+                #{similarWebData.ranking.globalRank?.toLocaleString() || 'N/A'}
               </div>
             </div>
             <div>
               <div className="font-medium text-gray-500">Tempo sul Sito</div>
               <div className="text-xl font-bold text-purple-600">
-                {similarWebData.timeOnSite || 'N/A'}min
+                {similarWebData.traffic.timeOnSite || 'N/A'}min
               </div>
             </div>
             <div>
               <div className="font-medium text-gray-500">Bounce Rate</div>
               <div className="text-xl font-bold text-orange-600">
-                {similarWebData.bounceRate || 'N/A'}%
+                {similarWebData.traffic.bounceRate || 'N/A'}%
               </div>
             </div>
           </div>
@@ -235,7 +260,7 @@ export default function SendCloudBDRChat() {
           <div>
             <h4 className="font-medium mb-3">🌍 Distribuzione Geografica del Traffico</h4>
             <div className="space-y-2">
-              {similarWebData.topCountries?.slice(0, 5).map((country, index) => (
+              {similarWebData.geography.topCountries?.slice(0, 5).map((country: any, index: number) => (
                 <div key={country.countryCode} className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-mono">{country.countryCode}</span>
@@ -262,19 +287,19 @@ export default function SendCloudBDRChat() {
             <div className="grid grid-cols-2 gap-2 text-sm">
               <div className="flex justify-between">
                 <span>🔍 Ricerca:</span>
-                <span className="font-medium">{similarWebData.trafficSources?.search || 0}%</span>
+                <span className="font-medium">{similarWebData.sources?.search || 0}%</span>
               </div>
               <div className="flex justify-between">
                 <span>🌐 Diretto:</span>
-                <span className="font-medium">{similarWebData.trafficSources?.direct || 0}%</span>
+                <span className="font-medium">{similarWebData.sources?.direct || 0}%</span>
               </div>
               <div className="flex justify-between">
                 <span>👥 Social:</span>
-                <span className="font-medium">{similarWebData.trafficSources?.social || 0}%</span>
+                <span className="font-medium">{similarWebData.sources?.social || 0}%</span>
               </div>
               <div className="flex justify-between">
                 <span>🔗 Referral:</span>
-                <span className="font-medium">{similarWebData.trafficSources?.referrals || 0}%</span>
+                <span className="font-medium">{similarWebData.sources?.referrals || 0}%</span>
               </div>
             </div>
           </div>
