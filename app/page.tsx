@@ -238,13 +238,14 @@ export default function SendCloudBDRChat() {
 
     console.log('🎨 Rendering SimilarWeb data:', similarWebData)
 
-    // Calcolo stime e-commerce (conversion rate Italia: 1.5-2.5%)
-    const monthlyVisits = similarWebData.traffic.totalVisits || 0
-    const conversionRate = 2.0 // 2% medio per e-commerce italiano
-    const averageOrderValue = 75 // €75 AOV medio italiano
-    const monthlyOrders = Math.round(monthlyVisits * (conversionRate / 100))
-    const monthlyShipments = monthlyOrders * 1.05 // 5% spedizioni multiple
-    const monthlyRevenue = monthlyOrders * averageOrderValue
+    try {
+      // Calcolo stime e-commerce (conversion rate Italia: 1.5-2.5%)
+      const monthlyVisits = similarWebData.traffic?.totalVisits || 0
+      const conversionRate = 2.0 // 2% medio per e-commerce italiano
+      const averageOrderValue = 75 // €75 AOV medio italiano
+      const monthlyOrders = Math.round(monthlyVisits * (conversionRate / 100))
+      const monthlyShipments = monthlyOrders * 1.05 // 5% spedizioni multiple
+      const monthlyRevenue = monthlyOrders * averageOrderValue
 
     return (
       <div className="mt-4 space-y-4">
@@ -252,7 +253,7 @@ export default function SendCloudBDRChat() {
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
               📊 Analisi Completa Traffico Sito Web
-              <Badge variant="secondary">{similarWebData.basic.category}</Badge>
+              <Badge variant="secondary">{similarWebData.basic?.category || 'Non classificato'}</Badge>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -269,21 +270,21 @@ export default function SendCloudBDRChat() {
                 </div>
                 <div className="bg-green-50 p-3 rounded-lg">
                   <div className="font-medium text-gray-600">Ranking Globale</div>
-                  <div className="text-2xl font-bold text-green-600">
-                    #{similarWebData.ranking.globalRank?.toLocaleString() || 'N/A'}
-                  </div>
+                                     <div className="text-2xl font-bold text-green-600">
+                     #{similarWebData.ranking?.globalRank?.toLocaleString() || 'N/A'}
+                   </div>
                 </div>
                 <div className="bg-purple-50 p-3 rounded-lg">
                   <div className="font-medium text-gray-600">Tempo sul Sito</div>
-                  <div className="text-2xl font-bold text-purple-600">
-                    {similarWebData.traffic.timeOnSite || 'N/A'}min
-                  </div>
+                                     <div className="text-2xl font-bold text-purple-600">
+                     {similarWebData.traffic?.timeOnSite || 'N/A'}min
+                   </div>
                 </div>
                 <div className="bg-orange-50 p-3 rounded-lg">
                   <div className="font-medium text-gray-600">Bounce Rate</div>
-                  <div className="text-2xl font-bold text-orange-600">
-                    {similarWebData.traffic.bounceRate || 'N/A'}%
-                  </div>
+                                     <div className="text-2xl font-bold text-orange-600">
+                     {similarWebData.traffic?.bounceRate || 'N/A'}%
+                   </div>
                 </div>
               </div>
             </div>
@@ -332,8 +333,8 @@ export default function SendCloudBDRChat() {
             {/* Distribuzione Geografica Migliorata */}
             <div>
               <h4 className="font-semibold mb-3 text-gray-800">🌍 Mercati Principali & Opportunità Spedizioni</h4>
-              <div className="space-y-3">
-                {similarWebData.geography.topCountries?.slice(0, 5).map((country: any, index: number) => {
+                             <div className="space-y-3">
+                 {similarWebData.geography?.topCountries?.slice(0, 5).map((country: any, index: number) => {
                   const countryOrders = Math.round(monthlyOrders * (country.visitsShare / 100))
                   const countryShipments = Math.round(countryOrders * 1.05)
                   
@@ -434,10 +435,26 @@ export default function SendCloudBDRChat() {
               </>
             )}
 
+                      </CardContent>
+          </Card>
+        </div>
+      )
+    } catch (error) {
+      console.error('❌ Errore rendering SimilarWeb:', error)
+      return (
+        <Card className="mt-4">
+          <CardContent className="p-6">
+            <div className="text-center text-red-600">
+              <div className="text-lg font-medium">Errore nella visualizzazione dei dati</div>
+              <div className="text-sm text-gray-500 mt-2">
+                I dati sono stati ricevuti ma c'è un errore nella visualizzazione. 
+                Controlla la console per dettagli.
+              </div>
+            </div>
           </CardContent>
         </Card>
-      </div>
-    )
+      )
+    }
   }
 
   return (
