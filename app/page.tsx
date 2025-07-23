@@ -103,6 +103,7 @@ export default function SendCloudBDRChat() {
   const [similarWebData, setSimilarWebData] = useState<SimilarWebData | null>(null)
   const [analyzingWebsite, setAnalyzingWebsite] = useState(false)
   const [analysisError, setAnalysisError] = useState<string | null>(null)
+  const [prospectSaved, setProspectSaved] = useState<{ id: string, companyName: string } | null>(null)
 
   const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({
     api: "/api/chat",
@@ -141,6 +142,15 @@ export default function SendCloudBDRChat() {
       if (data.success) {
         console.log('✅ Frontend - Dati ricevuti:', data.data)
         setSimilarWebData(data.data)
+        
+        // Mostra notifica prospect salvato
+        if (data.prospectId && data.prospectData) {
+          setProspectSaved({
+            id: data.prospectId,
+            companyName: data.prospectData.companyName
+          })
+          console.log('💾 Prospect salvato:', data.prospectData)
+        }
       } else {
         let errorMsg = data.error || 'Errore nell\'analisi del traffico'
         
@@ -231,6 +241,7 @@ export default function SendCloudBDRChat() {
     })
     setSimilarWebData(null)
     setAnalysisError(null)
+    setProspectSaved(null)
   }
 
   const renderSimilarWebAnalysis = () => {
@@ -732,6 +743,40 @@ export default function SendCloudBDRChat() {
                   </div>
                 </CardContent>
               </Card>
+            )}
+
+            {/* Notifica prospect salvato */}
+            {prospectSaved && !showColdCallForm && !showOfferForm && (
+              <div className="max-w-4xl mx-auto mb-4">
+                <Alert className="bg-green-50 border-green-200">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="text-green-600 text-lg">✅</div>
+                      <div>
+                        <div className="font-medium text-green-800">
+                          Prospect salvato nel database!
+                        </div>
+                        <div className="text-sm text-green-600">
+                          <strong>{prospectSaved.companyName}</strong> è stato aggiunto ai tuoi prospect con tutti i dati di traffico e stime business.
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="text-xs font-mono">
+                        ID: {prospectSaved.id.slice(-8)}
+                      </Badge>
+                      <Button 
+                        size="sm" 
+                        variant="ghost" 
+                        onClick={() => setProspectSaved(null)}
+                        className="text-green-600 hover:text-green-800"
+                      >
+                        ✕
+                      </Button>
+                    </div>
+                  </div>
+                </Alert>
+              </div>
             )}
 
             {/* Mostra analisi SimilarWeb se disponibile (fuori dalla condizione messages) */}
