@@ -77,6 +77,13 @@ interface SimilarWebData {
     priority: string
     actionable: string
   }>
+  // Calcoli aggiuntivi per BDR
+  estimates?: {
+    monthlyOrders: number
+    monthlyShipments: number
+    conversionRate: number
+    averageOrderValue: number
+  }
 }
 
 export default function SendCloudBDRChat() {
@@ -129,7 +136,10 @@ export default function SendCloudBDRChat() {
 
       const data = await response.json()
 
+      console.log('🔍 Frontend - Risposta SimilarWeb:', data)
+
       if (data.success) {
+        console.log('✅ Frontend - Dati ricevuti:', data.data)
         setSimilarWebData(data.data)
       } else {
         let errorMsg = data.error || 'Errore nell\'analisi del traffico'
@@ -226,92 +236,207 @@ export default function SendCloudBDRChat() {
   const renderSimilarWebAnalysis = () => {
     if (!similarWebData) return null
 
+    console.log('🎨 Rendering SimilarWeb data:', similarWebData)
+
+    // Calcolo stime e-commerce (conversion rate Italia: 1.5-2.5%)
+    const monthlyVisits = similarWebData.traffic.totalVisits || 0
+    const conversionRate = 2.0 // 2% medio per e-commerce italiano
+    const averageOrderValue = 75 // €75 AOV medio italiano
+    const monthlyOrders = Math.round(monthlyVisits * (conversionRate / 100))
+    const monthlyShipments = monthlyOrders * 1.05 // 5% spedizioni multiple
+    const monthlyRevenue = monthlyOrders * averageOrderValue
+
     return (
-      <Card className="mt-4">
-        <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
-            📊 Analisi Traffico Sito Web
-            <Badge variant="secondary">{similarWebData.basic.category}</Badge>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+      <div className="mt-4 space-y-4">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              📊 Analisi Completa Traffico Sito Web
+              <Badge variant="secondary">{similarWebData.basic.category}</Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            
+            {/* Metriche Principali */}
             <div>
-              <div className="font-medium text-gray-500">Visite Mensili</div>
-              <div className="text-xl font-bold text-blue-600">
-                {similarWebData.traffic.totalVisits?.toLocaleString() || 'N/A'}
-              </div>
-            </div>
-            <div>
-              <div className="font-medium text-gray-500">Ranking Globale</div>
-              <div className="text-xl font-bold text-green-600">
-                #{similarWebData.ranking.globalRank?.toLocaleString() || 'N/A'}
-              </div>
-            </div>
-            <div>
-              <div className="font-medium text-gray-500">Tempo sul Sito</div>
-              <div className="text-xl font-bold text-purple-600">
-                {similarWebData.traffic.timeOnSite || 'N/A'}min
-              </div>
-            </div>
-            <div>
-              <div className="font-medium text-gray-500">Bounce Rate</div>
-              <div className="text-xl font-bold text-orange-600">
-                {similarWebData.traffic.bounceRate || 'N/A'}%
-              </div>
-            </div>
-          </div>
-
-          <Separator />
-
-          <div>
-            <h4 className="font-medium mb-3">🌍 Distribuzione Geografica del Traffico</h4>
-            <div className="space-y-2">
-              {similarWebData.geography.topCountries?.slice(0, 5).map((country: any, index: number) => (
-                <div key={country.countryCode} className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-mono">{country.countryCode}</span>
-                    <span className="text-sm">{country.countryName}</span>
-                  </div>
-                  <div className="flex items-center gap-2 flex-1 max-w-40">
-                    <Progress value={country.visitsShare} className="h-2" />
-                    <span className="text-sm font-medium min-w-fit">
-                      {country.visitsShare}%
-                    </span>
-                  </div>
-                  <div className="text-xs text-gray-500 min-w-fit">
-                    {country.estimatedVisits?.toLocaleString()} visite
+              <h4 className="font-semibold mb-3 text-gray-800">📈 Metriche Chiave</h4>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                <div className="bg-blue-50 p-3 rounded-lg">
+                  <div className="font-medium text-gray-600">Visite Mensili</div>
+                  <div className="text-2xl font-bold text-blue-600">
+                    {monthlyVisits.toLocaleString()}
                   </div>
                 </div>
-              ))}
-            </div>
-          </div>
-
-          <Separator />
-
-          <div>
-            <h4 className="font-medium mb-3">📈 Fonti di Traffico</h4>
-            <div className="grid grid-cols-2 gap-2 text-sm">
-              <div className="flex justify-between">
-                <span>🔍 Ricerca:</span>
-                <span className="font-medium">{similarWebData.sources?.search || 0}%</span>
-              </div>
-              <div className="flex justify-between">
-                <span>🌐 Diretto:</span>
-                <span className="font-medium">{similarWebData.sources?.direct || 0}%</span>
-              </div>
-              <div className="flex justify-between">
-                <span>👥 Social:</span>
-                <span className="font-medium">{similarWebData.sources?.social || 0}%</span>
-              </div>
-              <div className="flex justify-between">
-                <span>🔗 Referral:</span>
-                <span className="font-medium">{similarWebData.sources?.referrals || 0}%</span>
+                <div className="bg-green-50 p-3 rounded-lg">
+                  <div className="font-medium text-gray-600">Ranking Globale</div>
+                  <div className="text-2xl font-bold text-green-600">
+                    #{similarWebData.ranking.globalRank?.toLocaleString() || 'N/A'}
+                  </div>
+                </div>
+                <div className="bg-purple-50 p-3 rounded-lg">
+                  <div className="font-medium text-gray-600">Tempo sul Sito</div>
+                  <div className="text-2xl font-bold text-purple-600">
+                    {similarWebData.traffic.timeOnSite || 'N/A'}min
+                  </div>
+                </div>
+                <div className="bg-orange-50 p-3 rounded-lg">
+                  <div className="font-medium text-gray-600">Bounce Rate</div>
+                  <div className="text-2xl font-bold text-orange-600">
+                    {similarWebData.traffic.bounceRate || 'N/A'}%
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        </CardContent>
-      </Card>
+
+            <Separator />
+
+            {/* Stime E-commerce per BDR */}
+            <div>
+              <h4 className="font-semibold mb-3 text-gray-800">🛒 Stime E-commerce (per BDR)</h4>
+              <div className="bg-gradient-to-r from-green-50 to-blue-50 p-4 rounded-lg">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                  <div>
+                    <div className="font-medium text-gray-600">Ordini Stimati/Mese</div>
+                    <div className="text-xl font-bold text-green-600">
+                      {monthlyOrders.toLocaleString()}
+                    </div>
+                    <div className="text-xs text-gray-500">Conv. Rate: {conversionRate}%</div>
+                  </div>
+                  <div>
+                    <div className="font-medium text-gray-600">Spedizioni Stimate</div>
+                    <div className="text-xl font-bold text-blue-600">
+                      {Math.round(monthlyShipments).toLocaleString()}
+                    </div>
+                    <div className="text-xs text-gray-500">+5% multi-item</div>
+                  </div>
+                  <div>
+                    <div className="font-medium text-gray-600">Fatturato Stimato</div>
+                    <div className="text-xl font-bold text-purple-600">
+                      €{monthlyRevenue.toLocaleString()}
+                    </div>
+                    <div className="text-xs text-gray-500">AOV: €{averageOrderValue}</div>
+                  </div>
+                  <div>
+                    <div className="font-medium text-gray-600">Potenziale SendCloud</div>
+                    <div className="text-xl font-bold text-orange-600">
+                      €{Math.round(monthlyShipments * 2.5).toLocaleString()}
+                    </div>
+                    <div className="text-xs text-gray-500">~€2.50/spedizione</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Distribuzione Geografica Migliorata */}
+            <div>
+              <h4 className="font-semibold mb-3 text-gray-800">🌍 Mercati Principali & Opportunità Spedizioni</h4>
+              <div className="space-y-3">
+                {similarWebData.geography.topCountries?.slice(0, 5).map((country: any, index: number) => {
+                  const countryOrders = Math.round(monthlyOrders * (country.visitsShare / 100))
+                  const countryShipments = Math.round(countryOrders * 1.05)
+                  
+                  return (
+                    <div key={country.countryCode} className="bg-gray-50 p-3 rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-3">
+                          <span className="text-lg">#{index + 1}</span>
+                          <span className="font-mono text-sm bg-white px-2 py-1 rounded">{country.countryCode}</span>
+                          <span className="font-medium">{country.countryName}</span>
+                          {index === 0 && <Badge variant="secondary">Mercato Primario</Badge>}
+                        </div>
+                        <div className="text-right">
+                          <div className="font-bold text-lg">{country.visitsShare}%</div>
+                          <div className="text-xs text-gray-500">{country.estimatedVisits?.toLocaleString()} visite</div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-4 text-sm">
+                        <Progress value={country.visitsShare} className="h-2 flex-1" />
+                        <div className="flex gap-4 text-xs">
+                          <span>📦 {countryShipments.toLocaleString()} spedizioni/mese</span>
+                          <span>💰 €{Math.round(countryShipments * 3.5).toLocaleString()} costo spedizioni</span>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Fonti di Traffico */}
+            <div>
+              <h4 className="font-semibold mb-3 text-gray-800">📈 Canali di Acquisizione</h4>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                <div className="bg-blue-50 p-3 rounded-lg text-center">
+                  <div className="text-2xl">🔍</div>
+                  <div className="font-bold text-lg">{similarWebData.sources?.search || 0}%</div>
+                  <div className="text-sm text-gray-600">Ricerca</div>
+                </div>
+                <div className="bg-green-50 p-3 rounded-lg text-center">
+                  <div className="text-2xl">🌐</div>
+                  <div className="font-bold text-lg">{similarWebData.sources?.direct || 0}%</div>
+                  <div className="text-sm text-gray-600">Diretto</div>
+                </div>
+                <div className="bg-purple-50 p-3 rounded-lg text-center">
+                  <div className="text-2xl">👥</div>
+                  <div className="font-bold text-lg">{similarWebData.sources?.social || 0}%</div>
+                  <div className="text-sm text-gray-600">Social</div>
+                </div>
+                <div className="bg-orange-50 p-3 rounded-lg text-center">
+                  <div className="text-2xl">🔗</div>
+                  <div className="font-bold text-lg">{similarWebData.sources?.referrals || 0}%</div>
+                  <div className="text-sm text-gray-600">Referral</div>
+                </div>
+                <div className="bg-yellow-50 p-3 rounded-lg text-center">
+                  <div className="text-2xl">💰</div>
+                  <div className="font-bold text-lg">{similarWebData.sources?.paidReferrals || 0}%</div>
+                  <div className="text-sm text-gray-600">Advertising</div>
+                </div>
+                <div className="bg-gray-50 p-3 rounded-lg text-center">
+                  <div className="text-2xl">✉️</div>
+                  <div className="font-bold text-lg">{similarWebData.sources?.mail || 0}%</div>
+                  <div className="text-sm text-gray-600">Email</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Insights BDR se disponibili */}
+            {similarWebData.bdrInsights && similarWebData.bdrInsights.length > 0 && (
+              <>
+                <Separator />
+                <div>
+                  <h4 className="font-semibold mb-3 text-gray-800">💡 Insights per BDR</h4>
+                  <div className="space-y-2">
+                    {similarWebData.bdrInsights.map((insight: any, index: number) => (
+                      <div 
+                        key={index} 
+                        className={`p-3 rounded-lg border-l-4 ${
+                          insight.priority === 'high' 
+                            ? 'bg-red-50 border-red-400' 
+                            : insight.priority === 'medium' 
+                              ? 'bg-yellow-50 border-yellow-400' 
+                              : 'bg-blue-50 border-blue-400'
+                        }`}
+                      >
+                        <div className="font-medium text-sm">{insight.message}</div>
+                        {insight.actionable && (
+                          <div className="text-xs text-gray-600 mt-1">
+                            💼 <strong>Azione:</strong> {insight.actionable}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+
+          </CardContent>
+        </Card>
+      </div>
     )
   }
 
