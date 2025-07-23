@@ -513,6 +513,13 @@ export default function SendCloudBDRChat() {
           <Button
             variant="ghost"
             className="w-full justify-start text-left font-normal h-10"
+            onClick={() => window.open('/prospects', '_blank')}
+          >
+            📋 Prospect Salvati
+          </Button>
+          <Button
+            variant="ghost"
+            className="w-full justify-start text-left font-normal h-10"
             onClick={() => window.open('/knowledge-base', '_blank')}
           >
             📚 Knowledge Base
