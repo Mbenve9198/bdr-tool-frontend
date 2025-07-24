@@ -1,5 +1,5 @@
 // Backend API URL
-const BACKEND_URL = process.env.BACKEND_URL || 'https://sendcloud-bdr-backend.onrender.com/api'
+const BACKEND_URL = process.env.BACKEND_URL || 'https://bdr-tool-backend.onrender.com/api'
 
 export async function POST(req: Request) {
   try {

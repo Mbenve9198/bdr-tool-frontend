@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-const BACKEND_URL = process.env.BACKEND_URL || 'https://sendcloud-bdr-backend.onrender.com'
+const BACKEND_URL = process.env.BACKEND_URL || 'https://bdr-tool-backend.onrender.com'
 
 export async function GET(
   request: NextRequest,
