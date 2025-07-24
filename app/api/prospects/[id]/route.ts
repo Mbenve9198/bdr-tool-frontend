@@ -10,9 +10,9 @@ export async function GET(
     const { id } = params
     console.log(`📄 Chiamata GET /api/prospects/${id} - recupero dettagli prospect`)
     console.log('🔗 BACKEND_URL:', BACKEND_URL)
-    console.log('🌐 Full URL:', `${BACKEND_URL}/api/similarweb/prospects/${id}`)
+    console.log('🌐 Full URL:', `${BACKEND_URL}/api/prospects/${id}`)
     
-    const response = await fetch(`${BACKEND_URL}/api/similarweb/prospects/${id}`, {
+    const response = await fetch(`${BACKEND_URL}/api/prospects/${id}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',

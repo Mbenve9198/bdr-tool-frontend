@@ -6,9 +6,9 @@ export async function GET(request: NextRequest) {
   try {
     console.log('📋 Chiamata GET /api/prospects - recupero lista prospect')
     console.log('🔗 BACKEND_URL:', BACKEND_URL)
-    console.log('🌐 Full URL:', `${BACKEND_URL}/api/similarweb/prospects`)
+    console.log('🌐 Full URL:', `${BACKEND_URL}/api/prospects`)
     
-    const response = await fetch(`${BACKEND_URL}/api/similarweb/prospects`, {
+    const response = await fetch(`${BACKEND_URL}/api/prospects`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
